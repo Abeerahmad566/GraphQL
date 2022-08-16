@@ -1,5 +1,8 @@
 const Book = require("../models/book");
 const Notification = require("../models/notification");
+const { PubSub } = require("graphql-subscriptions");
+
+const pubsub = new PubSub();
 
 const resolvers = {
   Query: {
@@ -17,6 +20,12 @@ const resolvers = {
     createBook: async (parent, args, context, info) => {
       const { name, genre, author } = args.book;
       const book = await new Book({ name, genre, author }).save();
+      pubsub.publish("NOTIFICATION CREATED", {
+        notificationCreated: {
+          name: name,
+          author: author,
+        },
+      });
       return book;
     },
     updateBook: async (parent, args, context, info) => {
@@ -32,11 +41,11 @@ const resolvers = {
       await Book.findByIdAndDelete(id);
       return "Deleted";
     },
-    createNoti: async (parent, args, context, info) => {
-      console.log(args);
-      const name = args;
-      const notification = await new Notification(name).save();
-      return notification;
+  },
+
+  Subscription: {
+    notificationCreated: {
+      subscribe: () => pubsub.asyncIterator("NOTIFICATION CREATED"),
     },
   },
 };

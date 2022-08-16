@@ -10,11 +10,3 @@ export const getALL = gql`
     }
   }
 `;
-
-export const getALLNoti = gql`
-  {
-    getAllnoti {
-      name
-    }
-  }
-`;

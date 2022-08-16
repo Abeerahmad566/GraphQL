@@ -9,13 +9,7 @@ export const CREATE_BOOK = gql`
     }
   }
 `;
-export const CREATE_NOTI = gql`
-  mutation createNoti($name: String) {
-    createNoti(name: $name) {
-      name
-    }
-  }
-`;
+
 export const UPDATE_BOOK = gql`
   mutation updateBook(
     $id: String!
@@ -35,5 +29,13 @@ export const UPDATE_BOOK = gql`
 export const DELETE_BOOK = gql`
   mutation deleteBook($id: String) {
     deleteBook(id: $id)
+  }
+`;
+export const NOTIFICATION_SUBSCRIPTION = gql`
+  subscription notificationCreated {
+    notificationCreated {
+      name
+      author
+    }
   }
 `;

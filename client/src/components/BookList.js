@@ -2,13 +2,8 @@ import React from "react";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
-import { getALL, getALLNoti } from "../queries/Query";
-import {
-  CREATE_BOOK,
-  UPDATE_BOOK,
-  DELETE_BOOK,
-  CREATE_NOTI,
-} from "../queries/Mutation";
+import { getALL } from "../queries/Query";
+import { CREATE_BOOK, UPDATE_BOOK, DELETE_BOOK } from "../queries/Mutation";
 
 const BookList = () => {
   const [name, setname] = useState("");
@@ -20,16 +15,16 @@ const BookList = () => {
   const [createBook, { erro }] = useMutation(CREATE_BOOK);
   const [deleteBook, { errr }] = useMutation(DELETE_BOOK);
   const [updateBook, { err }] = useMutation(UPDATE_BOOK);
-  const [createnoti, { er }] = useMutation(CREATE_NOTI);
+
   if (loading) return "Loading...";
   if (error) return "Error:(";
 
   // console.log({ id });
   const addbook = (e) => {
     e.preventDefault();
-    if (name == "") alert("name field is empty");
-    else if (genre == "") alert("genre field is empty");
-    else if (author == "") alert("author field is empty");
+    if (name === "") alert("name field is empty");
+    else if (genre === "") alert("genre field is empty");
+    else if (author === "") alert("author field is empty");
     else {
       createBook({
         variables: {
@@ -66,19 +61,7 @@ const BookList = () => {
       refetchQueries: [{ query: getALL }],
     });
   };
-  const createNotification = () => {
-    if (name == "") alert("Name Field is Empty");
-    else if (genre == "") alert("genre field is empty");
-    else if (author == "") alert("author field is empty");
-    else {
-      createnoti({
-        variables: {
-          name: name,
-        },
-        refetchQueries: [{ query: getALLNoti }],
-      });
-    }
-  };
+
   return (
     <div>
       <form id="add-book">
@@ -115,7 +98,6 @@ const BookList = () => {
           <button
             onClick={(e) => {
               addbook(e);
-              createNotification();
             }}
           >
             +

@@ -9,6 +9,7 @@ const typeDefs = gql`
   }
   type Notification {
     name: String
+    author: String
   }
   type Query {
     hello: String
@@ -17,6 +18,7 @@ const typeDefs = gql`
   }
   input NotificationInput {
     name: String
+    author: String
   }
   input BookInput {
     name: String
@@ -24,7 +26,7 @@ const typeDefs = gql`
     author: String
   }
   type Subscription {
-    messageCreated: Notification
+    notificationCreated: Notification
   }
   type Mutation {
     createBook(book: BookInput): Book

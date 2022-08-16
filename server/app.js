@@ -1,17 +1,21 @@
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
-const { graphqlHTTP } = require("express-graphql");
 const typeDefs = require("./schema/typeDefs");
 const resolvers = require("./schema/resolvers");
-const mongoose = require("mongoose");
 const cors = require("cors");
+const { WebSocketServer } = require("ws");
+const { useServer } = require("graphql-ws/lib/use/ws");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
-const { SubscriptionServer } = require("subscriptions-transport-ws");
-const { execute, subscribe } = require("graphql");
 const { createServer } = require("http");
-
+const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
+const connectDb = require("./db");
+const dotenv = require("dotenv");
+dotenv.config({ path: "./.env" });
 const app = express();
 app.use(cors());
+const { PubSub } = require("graphql-subscriptions");
+
+const pubsub = new PubSub();
 
 // app.use(
 //   "/graphql",
@@ -32,33 +36,46 @@ app.use(cors());
 //   app.listen(4000, () => console.log("Server UP & RUnning *4000"));
 // };
 // startServer();
-(async function () {
-  const app = express();
 
-  const httpServer = createServer(app);
-
+async function serverstart() {
+  // console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   const schema = makeExecutableSchema({
     typeDefs,
     resolvers,
   });
+  const app = express();
+  const httpServer = createServer(app);
 
-  const subscriptionServer = SubscriptionServer.create(
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/graphql",
+  });
+  const getDynamicContent = async (ctx, msg, args) => {
+    return { pubsub };
+  };
+  const serverCleanup = useServer(
     {
       schema,
-      execute,
-      subscribe,
+      context: (ctx, msg, args) => {
+        return getDynamicContent(ctx, msg, args);
+      },
     },
-    { server: httpServer, path: "/graphql" }
+
+    wsServer
   );
 
   const server = new ApolloServer({
     schema,
+    // csrfPrevention: true,
+
+    // cache: "bounded",
     plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
       {
         async serverWillStart() {
           return {
             async drainServer() {
-              subscriptionServer.close();
+              await serverCleanup.dispose();
             },
           };
         },
@@ -66,14 +83,19 @@ app.use(cors());
     ],
   });
   await server.start();
+  //graphql path
   server.applyMiddleware({ app });
-
-  mongoose.connect(
-    "mongodb+srv://Abeer:abeer@cluster0.hpwdt.mongodb.net/GraphQl?retryWrites=true&w=majority"
-  );
-  mongoose.connection.once("open", () => {
-    console.log("Connected to Mongoose");
+  // database connect
+  await connectDb();
+  // port listen
+  const port = process.env.PORT;
+  httpServer.listen(port, () => {
+    console.log(
+      `App running in ${process.env.NODE_ENV}  http://localhost:${port}${server.graphqlPath}`
+    );
+    console.log(
+      `🚀 Subscription endpoint ready at ws://localhost:${port}${server.graphqlPath}`
+    );
   });
-
-  httpServer.listen(4000, () => console.log("Server is running on " + 4000));
-})();
+}
+serverstart();
